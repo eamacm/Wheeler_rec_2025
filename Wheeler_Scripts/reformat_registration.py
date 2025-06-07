@@ -111,6 +111,44 @@ def make_emergency_contact_child_df(df):
     child_df = pd.DataFrame(child_rows)
     return child_df
 
+def make_swim(df):
+    child_rows = []
+
+    for idx, row in df.iterrows():
+        for i in range(1, 8):  # children 1 to 7
+            first_name = row.get(f"child{i}_first_name", "")
+            last_name = row.get(f"child{i}_last_name", "")
+            age = row.get(f"age_{i}", "")
+            last_level = row.get(f"child{i}_2025_level", "")
+            swim_interest = row.get(f"child{i}_swim_interest", "")
+            
+            # Determine swim participation
+            swim_lessons = "Yes" if "Swim Lessons" in str(swim_interest) else "No"
+            swim_team = "Yes" if "Swim Team" in str(swim_interest) else "No"
+
+            if pd.notna(first_name) or pd.notna(last_name):  # skip empty child slots
+                child_row = {
+                    "CHILD LAST NAME": last_name,
+                    "CHILD FIRST NAME": first_name,
+                    "Age as of 6/1/2023": age,
+                    "MEMBER ADULT #1": str(row.get("adult1_first_name", "")) + " " + str(row.get("adult1_last_name", "")),
+                    "Phone Number Member Adult #1": row.get("phone1", ""),
+                    "MEMBER ADULT #2": str(row.get("adult2_first_name", "")) + " " + str(row.get("adult2_last_name", "")),
+                    "Phone Number Member Adult #2": row.get("phone2", ""),
+                    "Email 1": row.get("email1", ""),
+                    "Email 2": row.get("email2", ""),
+                    "Last Swim Level": last_level,
+                    "Swim Lessons": swim_lessons,
+                    "Swim Team": swim_team
+                }
+                child_rows.append(child_row)
+
+    child_df = pd.DataFrame(child_rows)
+    swim_team_df = child_df[child_df["Swim Team"] == "Yes"]
+    swim_lessons_df = child_df[child_df["Swim Lessons"] == "Yes"]
+    return swim_team_df, swim_lessons_df
+    
+
 def main():
     parser = argparse.ArgumentParser(description="Reheader a CSV file with a predefined set of column names.")
     parser.add_argument("input_csv", help="Path to the input CSV file")
@@ -121,6 +159,9 @@ def main():
     emergency_csv.to_csv("emergency_contacts.csv", index=False)
     work_duty_prep = create_work_duty_df(new_csv)
     work_duty_prep.to_csv("work_duties_full.csv", index=False)
+    team_csv, lessons_csv=make_swim(new_csv)
+    team_csv.to_csv("swim_team_registration.csv", index=False)
+    lessons_csv.to_csv("swim_lessons_registration.csv", index=False)
     
 
 if __name__ == "__main__":
